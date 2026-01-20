@@ -1,0 +1,6 @@
+Questo file .txt dà informazioni riguardo la struttura dei file .csv con nome:
+SUB_numeroPaziente_SIG_numeroRunDelPaziente.csv
+
+Per ogni paziente abbiamo 12 matrici di size () corrispondenti a 12 file .csv con SIG.
+Il file è composto da 19680 o 19920 righe (corrispondente al valore della fine della prova nell'ultima riga del file ANN) 
+con 64 campi per riga, corrispondenti ai valori delle misurazioni.
