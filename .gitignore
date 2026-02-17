@@ -2,7 +2,14 @@
 *.exe
 *.o
 __pycache__/
+*.pyc
 *.csv
-*.rar
 *.zip
 eegmmidb/
+processed_data/
+*.npy
+*.npz
+*.pdf
+images/
+*.fif
+data/

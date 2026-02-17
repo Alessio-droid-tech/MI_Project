@@ -1,68 +1,79 @@
 import os
-import numpy as np
+import mne
+import time
 from pipeline import process_run
 from config import TARGET_RUNS # Controlla che la run SIG del file CSV sia 2 6 o 10
 
 DATASET_PATH = os.path.join("..", "eegmmidb")
-OUTPUT_PATH = "processed_data"
-
+OUTPUT_PATH = os.path.join("..", "data", "clean")
 os.makedirs(OUTPUT_PATH, exist_ok=True)
 
-x_all = []
-y_all = []
 
-# Trova tutti i file SIG
-sig_files = sorted([
-    f for f in os.listdir(DATASET_PATH)
-    if "_SIG_" in f and f.endswith(".csv")
-])
+def run_batch_processing():
+    start_time = time.time()
 
-print(f"Trovati {len(sig_files)} files SIG nel Dataset.")
+    subject_ids = range(1, 104) # 103 soggetti nel dataset Mendeley
 
-for sig_file in sig_files:
-    parts = sig_file.replace(".csv", "").split("_")
-    run_id = int(parts[-1]) # Prende 02, 06 o 10
+    print(f"Inizio elaborazione per {len(subject_ids)} potenziali soggetti...")
+    print(f"Salvataggio in: {os.path.abspath(OUTPUT_PATH)}")
+    print("--" * 30)
 
-    if run_id not in TARGET_RUNS: # Saltiamo i file che non compiono task di MI che ci interessano (modificare se si implementano altre funzionalità)
-        continue
+    for sub_id in subject_ids:
+        sub_str = f"{sub_id:03d}"
 
-    print(f"Processing {sig_file} (Target Run: {run_id})...")
+        # Lista per accumulare le tre epoche delle 3 run di questo soggetto
+        subject_epochs_list = list()
 
-    ann_file = sig_file.replace("_SIG_", "_ANN_")
+        print(f"\nPROCESSING SUBJECT {sub_str}_{run_str}...")
 
-    sig_path = os.path.join(DATASET_PATH, sig_file)
-    ann_path = os.path.join(DATASET_PATH, ann_file)
+        # Iterazione sulle run di target (2, 6, 10)
+        for run_id in TARGET_RUNS:
+            run_str = f"{run_id:02d}"
 
-    if not os.path.exists(ann_path):
-        print(f"ANN mancante per {sig_file}.")
-        continue
+            sig_file = f"SUB_{sub_str}_SIG_{run_str}.csv"
+            ann_file = f"SUB_{sub_str}_ANN_{run_str}.csv"
+            
+            sig_path = os.path.join(DATASET_PATH, sig_file)
+            ann_path = os.path.join(DATASET_PATH, ann_file)  
 
-    try:
-        x, y = process_run(sig_path, ann_path)
+            # Controlla se i file esistono
+            if not os.path.exists(sig_path) or not os.path.exists(ann_path):
+                print(f"  Run {run_str} mancante. Skipping.")
+                continue
 
-        if len(x) > 0:
-            x_all.append(x)
-            y_all.append(y)
-            print(f" -> Aggiunte {len(x)} epoche.")
+            try:
+                # Chiama pipeline che ritorna oggetto MNE Epochs:
+                epochs = process_run(sig_path, ann_path)
+
+                # Check sulla presenza di eventi validi nell'epoca
+                if len(epochs) > 0:
+                    subject_epochs_list.append(epochs)
+                    print(f"   Run {run_str}: OK ({len(epochs)} epoche)")
+                else:
+                    print(f"   Run {run_str}: Nessun evento valido trovato.")
+            except Exception as e:
+                print(f"   ERRORE su Run {run_str}: {e}")
+        
+
+        # FINE DEL SOGGETTO
+        
+        # Concatenazione delle epoche di questo soggetto (se ne sono state ottenute)
+        if len(subject_epochs_list) > 0:
+            all_sub_epochs = mne.concatenate_epochs(subject_epochs_list)
+
+            # Salvataggio -> File di tipo .fif (non .npy)
+            save_name = f"subject_{sub_str}_clean-epo.fif"
+            save_path = os.path.join(OUTPUT_PATH, save_name)
+
+            all_sub_epochs.save(save_path, overwrite=True, verbose=False)
+            print(f" >> SALVATO: {save_name} [{len(all_sub_epochs)} epoche totali]")
         else:
-            print("Nessun evento trovato in questo file.")
+            print(f" >> Nessun dato valido per Subject {sub_str}. Skipped.")
 
-    except Exception as e:
-        print(f"ERRORE CRITICO su {sig_file}: {e}")
+    # --- FINE TOTALE ---
+    elapsed = time.time() - start_time
+    print("\n" + "=" * 30)
+    print(f"ELABORAZIONE COMPLETATA in {elapsed/60:.2f} minuti.")
 
-
-# Concatenazione finale
-if len(x_all) > 0:
-    x_all = np.concatenate(x_all, axis=0)
-    y_all = np.concatenate(y_all, axis=0)
-
-    np.save(os.path.join(OUTPUT_PATH, "x.npy"), x_all)
-    np.save(os.path.join(OUTPUT_PATH, "y.npy"), y_all)
-
-    print("----- ELABORAZIONE COMPLETATA -----")
-    print(f"Dataset finale salvato in {OUTPUT_PATH}!")
-    print(f"Campioni totali (epoche): {x_all.shape[0]}.")
-    print("Dimensioni X:", x_all.shape)
-    print("Dimensioni Y:", y_all.shape)
-else:
-    print("Nessun dato salvato. Eseguire CHECK sui percorsi o sui filtri!")
+if __name__ == "__main__":
+    run_batch_processing()

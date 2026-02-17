@@ -15,12 +15,14 @@ def remove_artifacts(raw: BaseRaw):
     raw_for_ica.set_eeg_reference('average', projection=False, verbose=False)
 
     # Filtro HIGH-PASS robusto per il fitting dell'ICA. ( e modificato 1-100 Hz per ICLabel)
-    raw_for_ica.filter(l_freq=1.0, h_freq=100.0, verbose=False)
+    raw_for_ica.filter(l_freq=1.0, h_freq=None, verbose=False) # Con Higher = 100 errore perché Hz max = 80 (limite creato da Nyquist)
 
-    # Fit dell'ICA utilizzando algoritmo picard (o fastica)
+    # Fit dell'ICA utilizzando algoritmo picard (o fastICA)
+    # Modalità EXTENDED per avere più possibilità di individuare un artefatto
     ica = ICA(
         n_components=ICA_COMPONENTS,
         method="picard",
+        fit_params=dict(ortho=False, extended=True),
         random_state=RANDOM_STATE,
         max_iter="auto",
         verbose=False
@@ -37,23 +39,28 @@ def remove_artifacts(raw: BaseRaw):
     labels = component_labels["labels"]
     probs = component_labels["y_pred_proba"]
 
+
     # Settore per esclusione:
     # rimuoviamo tutto ciò che è classificato, con alta probabilità, come artefatto.
     print(" -> Analisi componenti ICA:")
     for i, label in enumerate(labels):
         prob = probs[i]
 
+         # Per DEBUG
+        print(f"     Comp {i:02d}: {label.upper():<12} (Prob: {prob:.1%})", end="")
+
         # Logica per esclusione
-        if label in ['muscle', 'eye', 'heart', 'line_noise', 'channel_noise']:
-            if prob > 0.70:
-                # Rimozione artefatto
-                exclude_idx.append(i)
-                print(f" [X] Comp {i}: {label.upper()} ({prob:.2%}) => RIMOSSA!")
-            else:
-                print(f" [ ] Comp {i}: {label} ({prob:.2%}) => DUBBIO (MANTENUTA)!")
+        # if label in ['muscle', 'eye', 'heart', 'line_noise', 'channel_noise']:
+        # Inversione dell'if per etichette che non trovava
+
+        is_artifact = label not in ['brain', 'other']
+        
+        if is_artifact and prob > 0.30: # Abbassamento soglia a 30% per vedere se ICA detecta qualcosa (bassa, cercare di alzarla)
+            # Rimozione artefatto
+            exclude_idx.append(i)
+            print(f" [X] Comp {i}: {label.upper()} ({prob:.2%}) => RIMOSSA!")
         else:
-            # Brain o Other
-            pass
+            print(f" [ ] Comp {i}: {label} ({prob:.2%}) => MANTENUTA!")
     
     ica.exclude = exclude_idx
 
