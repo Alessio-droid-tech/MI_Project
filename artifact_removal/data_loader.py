@@ -6,11 +6,10 @@ from config import SFREQ, N_CHANNELS, CH_NAMES, EVENT_MAPPING
 
 def load_sig_csv(path_sig):
     """
-    Docstring for load_csv_data
     Carica i file .csv di tipo SIG e lo converte in Raw MNE
     """
     df = pd.read_csv(path_sig, header=None)
-    data = df.values.T  # Transpose to have channels in rows
+    data = df.values.T
     data = data * 1e-6 # Trasformazione da uV a V (microvolt a volt)
 
     info = mne.create_info(

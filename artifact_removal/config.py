@@ -1,13 +1,13 @@
 # PARAMETRI GLOBALI (costanti)
 LOW_FREQ = 1.0
 HIGH_FREQ = 40.0
-NOTCH_FREQ = 60.0 # Based on american Hz value.
+NOTCH_FREQ = 60.0 # Basato sul valore americano.
 SFREQ = 160
 N_CHANNELS = 64
 
 # SELEZIONE DEI DATI basata sulla tabella 2 a https://www.sciencedirect.com/science/article/pii/S2352340924001525?utm_source=chatgpt.com#fig0001
 # Motor Imagery per Left/Right fist corrisponde ai file 2 6 10. Se si vuole implementare anche i Both Feet bisogna usare 4 8 e 12. Se si vuole implementare anche il Motor Execution, tutti gli altri.
-TARGET_RUNS = [2, 6, 10] # Questi per addrestrare un modello Left vs Right
+TARGET_RUNS = [2, 6, 10] # Questi per addrestrare un modello Left vs Right mani di MI.
 
 # Il mapping segue sempre la tabella (ultima colonna)
 EVENT_MAPPING = {
@@ -28,7 +28,7 @@ RANDOM_STATE = 97
 
 
 
-# LISTA DEI CANALI usando lo standard 10-10 usato da PhysioNet
+# LISTA DEI CANALI usando lo standard 10-10 usato da PhysioNet (Diverso da standard 10-20 globale)
 CH_NAMES = [
     'FC5', 'FC3', 'FC1', 'FCz', 'FC2', 'FC4', 'FC6', 'C5', 'C3', 'C1', 'Cz', 'C2', 'C4', 'C6',
     'CP5', 'CP3', 'CP1', 'CPz', 'CP2', 'CP4', 'CP6', 'Fp1', 'Fpz', 'Fp2', 'AF7', 'AF3', 'AFz',

@@ -20,12 +20,15 @@ def remove_artifacts(raw: BaseRaw):
     # Fit dell'ICA utilizzando algoritmo picard (o fastICA)
     # Modalità EXTENDED per avere più possibilità di individuare un artefatto
     ica = ICA(
-        n_components=ICA_COMPONENTS,
-        method="picard",
-        fit_params=dict(ortho=False, extended=True),
-        random_state=RANDOM_STATE,
-        max_iter="auto",
-        verbose=False
+        n_components=ICA_COMPONENTS,  # Numero di componenti indipendenti da estrarre (definito in config.py)
+        method="picard",              # Algoritmo di ottimizzazione utilizzato
+        fit_params=dict(
+            ortho=False,              # Disabilità il vincolo di ortogonalità fra le componenti
+            extended=True             # Abilita modalità extended-ICA (per separazione sorgenti sub-Gaussiane da super-Gaussiane)
+        ),
+        random_state=RANDOM_STATE,    # Seed per la riproducibilità dei risultati (definito in config.py)
+        max_iter="auto",              # Numero massimo di iterazioni (con automatico si adatta alla convergenza)
+        verbose=False                 # Disattiva messaggi di log dettagliati per non avere output troppo lungo
     )
     ica.fit(raw_for_ica)
 

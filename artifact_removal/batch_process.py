@@ -4,13 +4,13 @@ import time
 from pipeline import process_run
 from config import TARGET_RUNS # Controlla che la run SIG del file CSV sia 2 6 o 10
 
-DATASET_PATH = os.path.join("..", "eegmmidb")
-OUTPUT_PATH = os.path.join("..", "data", "clean")
+DATASET_PATH = os.path.join("..", "eegmmidb")     # Dove prendere i file sporchi
+OUTPUT_PATH = os.path.join("..", "data", "clean") # Crea cartella con dati puliti
 os.makedirs(OUTPUT_PATH, exist_ok=True)
 
 
 def run_batch_processing():
-    start_time = time.time()
+    start_time = time.time() # Tempo di inizio della pulizia dei dati
 
     subject_ids = range(1, 104) # 103 soggetti nel dataset Mendeley
 
@@ -71,7 +71,7 @@ def run_batch_processing():
             print(f" >> Nessun dato valido per Subject {sub_str}. Skipped.")
 
     # --- FINE TOTALE ---
-    elapsed = time.time() - start_time
+    elapsed = time.time() - start_time # Tempo totale di esecuzione su tutti i file
     print("\n" + "=" * 30)
     print(f"ELABORAZIONE COMPLETATA in {elapsed/60:.2f} minuti.")
 

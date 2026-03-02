@@ -13,3 +13,6 @@ processed_data/
 images/
 *.fif
 data/
+results/
+dataset_bci_iv/
+*.mat
