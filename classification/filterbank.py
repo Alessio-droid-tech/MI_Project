@@ -12,6 +12,7 @@ class FilterBankRiemannian(BaseEstimator, TransformerMixin):
     """
     def __init__(self, freq_bands=None, sfreq=250, estimator='wlf'):
         self.freq_bands = freq_bands or [
+            (4, 8),    # Nuova, utilizzare solo per i piedi
             (8, 12),   # Mu
             (12, 16),  # Beta bassa
             (16, 24),  # Beta media

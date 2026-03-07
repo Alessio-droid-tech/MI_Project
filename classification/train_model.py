@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 
 
 DATA_DIR = os.path.join("..", "data", "clean")
-RESULTS_DIR = "results"
+RESULTS_DIR = os.path.join("results", "PHYSIONET_CSP_SVM")
 os.makedirs(RESULTS_DIR, exist_ok=True)
 
 
@@ -138,8 +138,8 @@ def train_physionet():
     print("--" * 30)
 
     # Save dei dati per grafici con matplotlib
-    np.save(os.path.join(RESULTS_DIR, "physioney_accuracies.npy"), accuracies)
-    with open(os.path.join(RESULTS_DIR, "physionet_result_log.json"), mode='w') as f:
+    np.save(os.path.join(RESULTS_DIR, "physionet_CSP_SVM_accuracies.npy"), accuracies)
+    with open(os.path.join(RESULTS_DIR, "physionet_CSP_SVM_result_log.json"), mode='w') as f:
         json.dump(results_log, f, indent=2)
     print(f"Risultati salvati in {RESULTS_DIR}/physionet_accuracies.npy")
 
@@ -148,17 +148,40 @@ def train_physionet():
     cm = confusion_matrix(all_y_true, all_y_pred)
     cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
 
-    plt.figure(figsize=(6, 5))
-    plt.imshow(cm, interpolation='nearest', cmap='Blues')
-    plt.title("Confusion Matrix - PhysioNet EEGMMIDB (Global)")
-    plt.colorbar()
-    plt.xlabel("Predicted")
-    plt.ylabel("True")
-    plt.xticks([0, 1], ["Left Hand", "Right Hand"])
-    plt.yticks([0, 1], ["Left Hand", "Right Hand"])
+    fig, ax = plt.subplots(figsize=(6, 5))
+    im = ax.imshow(cm, interpolation='nearest', cmap='Blues', vmin=0, vmax=1)
+    plt.colorbar(im, ax=ax)
+
+    # Aggiunta valori numerici in ogni cella
+    thresh = cm.max() / 2.0
+    for i in range(cm.shape[0]):
+        for j in range(cm.shape[1]):
+            ax.text(j, i, f"{cm[i, j]:.2f}",
+                    ha="center", va="center",
+                    color="white" if cm[i, j] > thresh else "black",
+                    fontsize=13, fontweight='bold')
+
+    ax.set_title("Confusion Matrix - PhysioNet EEGMMIDB (Global)")
+    ax.set_xlabel("Predicted")
+    ax.set_ylabel("True")
+    ax.set_xticks([0, 1])
+    ax.set_xticklabels(["Left Hand", "Right Hand"])
+    ax.set_yticks([0, 1])
+    ax.set_yticklabels(["Left Hand", "Right Hand"])
     plt.tight_layout()
-    plt.savefig(os.path.join(RESULTS_DIR, "physionet_confusion_matrix.png"))
+    plt.savefig(os.path.join(RESULTS_DIR, "physionet_csp_svm_confusion_matrix.png"), dpi=150)
     plt.show()
+    #plt.figure(figsize=(6, 5))
+    #plt.imshow(cm, interpolation='nearest', cmap='Blues')
+    #plt.title("Confusion Matrix - PhysioNet EEGMMIDB (Global)")
+    #plt.colorbar()
+    #plt.xlabel("Predicted")
+    #plt.ylabel("True")
+    #plt.xticks([0, 1], ["Left Hand", "Right Hand"])
+    #plt.yticks([0, 1], ["Left Hand", "Right Hand"])
+    #plt.tight_layout()
+    #plt.savefig(os.path.join(RESULTS_DIR, "physionet_csp_svm_confusion_matrix.png"))
+    #plt.show()
 
 
 if __name__ == "__main__":

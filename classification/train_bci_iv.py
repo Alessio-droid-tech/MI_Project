@@ -3,26 +3,17 @@ import json
 import numpy as np
 import mne
 import matplotlib.pyplot as plt
-import seaborn as sb
-#from mne.decoding import CSP
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC
-#from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.model_selection import GridSearchCV
-#from sklearn.model_selection import ShuffleSplit, cross_val_score
 from sklearn.metrics import confusion_matrix
-
-# Pacchetti per modifica da CSP a Riemannian Pipeline
-from pyriemann.estimation import Covariances
-from pyriemann.tangentspace import TangentSpace
-from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
 
 from filterbank import FilterBankRiemannian
 
 # --- CONFIGURAZIONE ---
 DATA_DIR = os.path.join("..", "data", "clean_bci_iv") # La nuova cartella
-RESULTS_DIR = "results"
+RESULTS_DIR = os.path.join("results", "BCI_FBR_SVM")
 os.makedirs(RESULTS_DIR, exist_ok=True)
 
 N_SPLITS = 5
@@ -74,47 +65,6 @@ def train_bci_iv():
         X_test = epochs_test.get_data()
         y_test = epochs_test.events[:, -1]
         
-
-        # ====================================================================
-        # Caricamento Dati
-        #epochs = mne.read_epochs(file_path, verbose=False)
-
-        # Filtraggio Frequenziale (8-30 Hz per Motor Imagery)
-        # Isolamento delle bande Mu e Beta.
-        #epochs.filter(l_freq=8.0, h_freq=30.0, verbose=False)
-
-        #X = epochs.get_data()
-        #y = epochs.events[:, -1]
-        # ======= STRUTTURA PRE INSERIMENTO FILE E ========
-
-
-        # ==========================================================================================
-        # Pipeline di Machine Learning
-        #csp = CSP(reg='ledoit_wolf', log=True, norm_trace=False) # No n_components per usare Grid Search
-        #svm = SVC(kernel='linear', C=1)
-        #svm = SVC(kernel='rbf', C=1, gamma='scale') POCO PIù BASSA DI KERNEL LINEAR
-        #lda = LinearDiscriminantAnalysis(solver='lsqr', shrinkage='auto')
-        #pipeline = Pipeline([
-        #    ('CSP', csp),
-        #    ('SVM', svm)
-        #])
-
-        
-        # Griglia dei parametri da testare (senza metterli fissi nel CSP per provare ad alzare accuracy)
-        #param_grid = {
-        #   'CSP__n_components': [4, 6, 8, 10],
-        #   'SVM__C': [0.1, 1, 10]
-        #}
-        # ====== TUTTA COMMENTATA PER IMPLEMENTARE RIEMANNIAN PIPELINE PER AUMENTARE ACCURACY ======
-
-        # Pipeline usando Riemannian
-       # pipeline = Pipeline([
-        #    ('Cov', Covariances()),                    # Calcola la matrice di covarianza su ogni trial usando Ledoit-Wolf Shrinkage Estimator
-        ##    #('TS', TangentSpace()),                    # Mappa le matrici SPD su uno spazio vettoriale
-        #    ('Scaler', StandardScaler()),              #
-        #    ('LR', LogisticRegression(max_iter=1000))  # Classificazione
-        #])
-
         # Pipeline usando Filter Bank + StandardScaler + SVM
         pipeline = Pipeline([
             ('FB', FilterBankRiemannian(sfreq=250)),
@@ -127,20 +77,6 @@ def train_bci_iv():
             'CLF__C': [0.1, 1, 10],
             'CLF__gamma': ['scale', 'auto']
         }
-
-        # Griglia dei parametri da testare con Riemannian
-        #param_grid = {
-        #    'Cov__estimator': ['scm', 'lwf', 'oas'],
-        #    'LR__C': [0.1, 1, 10]
-        #}
-
-        # Cross-Validation TOLTA PER USARE I FILE DI TIPO E
-        #cv = ShuffleSplit(
-        #    n_splits=N_SPLITS, 
-        #    test_size=TEST_SIZE, 
-        #    random_state=RANDOM_STATE
-        #)
-        # scores = cross_val_score(clf, X, y, cv=cv, n_jobs=1)
 
         # Grid Search
         grid = GridSearchCV(
@@ -171,26 +107,6 @@ def train_bci_iv():
             'best_params': grid.best_params_
         })
 
-        # GRAFICO CONFUSION MATRIX SU OGNI SOGGETTO
-     #   cm = confusion_matrix(y_test, y_pred)
-
-      #  plt.figure(figsize=(6,5))
-      #  plt.imshow(cm, interpolation='nearest')
-      #  plt.title(f"Confusion Matrix - {subject_id}")
-      #  plt.colorbar()
-      #  plt.xlabel("Predicted")
-      #  plt.ylabel("True")
-      #  plt.xticks(range(len(np.unique(y_test))))
-      #  plt.yticks(range(len(np.unique(y_test))))
-      #  plt.tight_layout()
-      #  plt.show()
-
-        # TEST su E
-        #test_acc = grid.score(X_test, y_test)
-
-        #mean_acc = grid.best_score_  # Prende il miglior risultato tra tutte le combinazioni provate della Grid Search
-        #accuracies.append(test_acc)
-
         print(f"Soggetto {subject_id} | Accuracy: {test_acc:.2%}")
         print(f"Best params (da T): {grid.best_params_}")
 
@@ -216,18 +132,29 @@ def train_bci_iv():
     # Normalizzazione per riga:
     cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
 
-    plt.figure(figsize=(6, 5))
-    plt.imshow(cm, interpolation='nearest', cmap='Blues')
-    #sb.heatmap(cm, annot=True, fmt=".2f", cmap="Blues")
-    plt.title("Confusion Matrix - BCI IV 2a (Global)")
-    plt.colorbar()
-    plt.xlabel("Predicted")
-    plt.ylabel("True")
-    plt.xticks([0, 1], ["Left Hand", "Right Hand"])
-    plt.yticks([0, 1], ["Left Hand", "Right Hand"])
-    plt.tight_layout()
-    plt.show()
+    fig, ax = plt.subplots(figsize=(6, 5))
+    im = ax.imshow(cm, interpolation='nearest', cmap='Blues', vmin=0, vmax=1)
+    plt.colorbar(im, ax=ax)
 
+    # Aggiunta valori numerici in ogni cella
+    thresh = cm.max() / 2.0
+    for i in range(cm.shape[0]):
+        for j in range(cm.shape[1]):
+            ax.text(j, i, f"{cm[i, j]:.2f}",
+                    ha="center", va="center",
+                    color="white" if cm[i, j] > thresh else "black",
+                    fontsize=13, fontweight='bold')
+
+    ax.set_title("Confusion Matrix - BCI Competition IV 2a")
+    ax.set_xlabel("Predicted")
+    ax.set_ylabel("True")
+    ax.set_xticks([0, 1])
+    ax.set_xticklabels(["Left Hand", "Right Hand"])
+    ax.set_yticks([0, 1])
+    ax.set_yticklabels(["Left Hand", "Right Hand"])
+    plt.tight_layout()
+    plt.savefig(os.path.join(RESULTS_DIR, "physionet_csp_svm_confusion_matrix.png"), dpi=150)
+    plt.show()
 
 if __name__ == "__main__":
     train_bci_iv()
