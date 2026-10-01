@@ -24,7 +24,7 @@ def run_batch_processing():
         # Lista per accumulare le tre epoche delle 3 run di questo soggetto
         subject_epochs_list = list()
 
-        print(f"\nPROCESSING SUBJECT {sub_str}_{run_str}...")
+        #print(f"\nPROCESSING SUBJECT {sub_str}_{run_str}...")
 
         # Iterazione sulle run di target (2, 6, 10)
         for run_id in TARGET_RUNS:

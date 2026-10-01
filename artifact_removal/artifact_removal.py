@@ -58,7 +58,7 @@ def remove_artifacts(raw: BaseRaw):
 
         is_artifact = label not in ['brain', 'other']
         
-        if is_artifact and prob > 0.30: # Abbassamento soglia a 30% per vedere se ICA detecta qualcosa (bassa, cercare di alzarla)
+        if is_artifact and prob > 0.70: # Abbassamento soglia a 30% per vedere se ICA detecta qualcosa (bassa, cercare di alzarla)
             # Rimozione artefatto
             exclude_idx.append(i)
             print(f" [X] Comp {i}: {label.upper()} ({prob:.2%}) => RIMOSSA!")

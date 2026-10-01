@@ -1,5 +1,5 @@
 import mne
-from config import EPOCH_TMIN, EPOCH_TMAX, MI_CLASSES
+from config import EPOCH_TMIN, EPOCH_TMAX, MI_CLASSES, EVENT_MAPPING
 
 
 def create_epochs(raw, events):
@@ -7,7 +7,7 @@ def create_epochs(raw, events):
     Crea epoch dal segnale EEG basato sugli eventi forniti.
     """
     # FIX: MNE vuole dizionario con formato {'Nome': ID}
-    event_id = {v: k for k, v in MI_CLASSES.items()}  # Dizionario di mapping delle classi
+    event_id = {MI_CLASSES[v]: k for k, v in EVENT_MAPPING.items()}  # Dizionario di mapping delle classi
     
 
     # Creazione di oggetti Epochs in MNE -> Segmenti di dati EEG tagliati attorno a determinati eventi.

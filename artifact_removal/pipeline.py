@@ -22,18 +22,3 @@ def process_run(sig_path, ann_path):
 
 if __name__ == "__main__":
     pass
-
-#    x = epochs.get_data() # Estrazione dei dati dagli epoch
-#    y = epochs.events[:, -1] # Estrazione delle etichette degli eventi
-
-#    return x, y
-
-#if __name__ == "__main__":
-#    x, y = process_run(
-#        "SUB_01_SIG_01.csv", 
-#        "SUB_01_ANN_01.csv"
-#    )
-#    print("Shape of x:", x.shape)
-#    print("Shape of y:", y.shape)
-# STILE PER RITORNO DATI TIPO NUMPY
-# ATTUALMENTE SOSTITUITO CON RITORNO DATI TIPO MNE
